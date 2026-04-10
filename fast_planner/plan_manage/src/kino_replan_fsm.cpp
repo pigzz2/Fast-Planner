@@ -74,7 +74,7 @@ namespace fast_planner
 
     if (target_type_ == TARGET_TYPE::MANUAL_TARGET)
     {
-      end_pt_ << msg->poses[0].pose.position.x, msg->poses[0].pose.position.y, 1.0; //! 限制了z轴高度！！
+      end_pt_ << msg->poses[0].pose.position.x, msg->poses[0].pose.position.y, msg->poses[0].pose.position.z;
     }
     else if (target_type_ == TARGET_TYPE::PRESET_TARGET)
     {

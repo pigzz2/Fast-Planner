@@ -86,7 +86,7 @@ Pose3DTool::processMouseEvent(ViewportMouseEvent& event)
   const double         z_scale    = 50;
   const double         z_interval = 0.5;
   Ogre::Quaternion     orient_x =
-    Ogre::Quaternion(Ogre::Radian(Ogre::Math::HALF_PI), Ogre::Vector3::UNIT_Z);
+    Ogre::Quaternion(Ogre::Radian(-Ogre::Math::HALF_PI), Ogre::Vector3::UNIT_Y);
 
   if (event.leftDown())
   {
@@ -114,9 +114,9 @@ Pose3DTool::processMouseEvent(ViewportMouseEvent& event)
       {
         double angle = atan2(cur_pos.y - pos_.y, cur_pos.x - pos_.x);
         arrow_->getSceneNode()->setVisible(true);
-        arrow_->setOrientation(Ogre::Quaternion(orient_x));
+        arrow_->setOrientation(Ogre::Quaternion(Ogre::Radian(angle), Ogre::Vector3::UNIT_Z) * orient_x);
         if (event.right())
-          state_  = Height;
+          state_ = Height;
         initz     = pos_.z;
         prevz     = event.y;
         prevangle = angle;
@@ -131,7 +131,7 @@ Pose3DTool::processMouseEvent(ViewportMouseEvent& event)
       pos_.z -= dz / z_scale;
       arrow_->setPosition(pos_);
       // Create a list of arrows
-      for (int k = 0; k < arrow_array.size(); k++)
+      for (int k = 0; k < (int)arrow_array.size(); k++)
         delete arrow_array[k];
       arrow_array.clear();
       int cnt = ceil(fabs(initz - pos_.z) / z_interval);
@@ -145,8 +145,7 @@ Pose3DTool::processMouseEvent(ViewportMouseEvent& event)
         arr_pos.z = initz - ((initz - pos_.z > 0) ? 1 : -1) * k * z_interval;
         arrow__->setPosition(arr_pos);
         arrow__->setOrientation(
-          Ogre::Quaternion(Ogre::Radian(prevangle), Ogre::Vector3::UNIT_Z) *
-          orient_x);
+          Ogre::Quaternion(Ogre::Radian(prevangle), Ogre::Vector3::UNIT_Z) * orient_x);
         arrow_array.push_back(arrow__);
       }
       flags |= Render;
@@ -157,11 +156,12 @@ Pose3DTool::processMouseEvent(ViewportMouseEvent& event)
     if (state_ == Orientation || state_ == Height)
     {
       // Create a list of arrows
-      for (int k = 0; k < arrow_array.size(); k++)
+      for (int k = 0; k < (int)arrow_array.size(); k++)
         delete arrow_array[k];
       arrow_array.clear();
       onPoseSet(pos_.x, pos_.y, pos_.z, prevangle);
       flags |= (Finished | Render);
+      state_ = Position; // 添加此行以确保下次点击正常
     }
   }
 

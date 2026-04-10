@@ -89,7 +89,7 @@ namespace fast_planner
       {
         target_point_(0) = msg->poses[0].pose.position.x;
         target_point_(1) = msg->poses[0].pose.position.y;
-        target_point_(2) = 1.0; //! 强制z轴高度！！
+        target_point_(2) = msg->poses[0].pose.position.z;
         std::cout << "manual: " << target_point_.transpose() << std::endl;
       }
       else if (target_type_ == TARGET_TYPE::PRESET_TARGET)
