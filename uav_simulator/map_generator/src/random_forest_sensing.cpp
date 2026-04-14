@@ -48,6 +48,8 @@ int circle_num_;
 bool use_circle_;
 int u_num_;
 bool use_u_shape_;
+int bar_num_;
+bool use_bar_;
 double radius_l_, radius_h_, z_l_, z_h_;
 double theta_;
 uniform_real_distribution<double> rand_radius_;
@@ -167,23 +169,17 @@ void RandomMapGenerate() {
 
   // generate U-shape obs
   if (use_u_shape_) {
-    uniform_real_distribution<double> rand_theta_u(0.0, 6.28);
-
     for (int i = 0; i < u_num_; ++i) {
       double x, y, z;
-      x = rand_x(eng);
-      y = rand_y(eng);
+      // Fixed position: Near start, 15m to the left (+Y)
+      x = -15.0; 
+      y = 15.0;
       z = 0.0; // Ground level
-
-      if (sqrt(pow(x - _init_x, 2) + pow(y - _init_y, 2)) < 5.0) {
-        i--;
-        continue;
-      }
 
       x = floor(x / _resolution) * _resolution + _resolution / 2.0;
       y = floor(y / _resolution) * _resolution + _resolution / 2.0;
 
-      double theta = rand_theta_u(eng); // Full 2*PI range
+      double theta = 3.1415926; // Opening faces -Y (towards the center path where drone starts)
       Eigen::Matrix3d rotate;
       rotate << cos(theta), -sin(theta), 0.0, sin(theta), cos(theta), 0.0, 0, 0, 1;
 
@@ -215,6 +211,35 @@ void RandomMapGenerate() {
             Eigen::Vector3d pt2(L / 2.0 + lt, ly, lz);
             pt2 = rotate * pt2 + Eigen::Vector3d(x, y, z);
             pt_random.x = pt2(0); pt_random.y = pt2(1); pt_random.z = pt2(2);
+            cloudMap.push_back(pt_random);
+          }
+        }
+      }
+    }
+  }
+
+  // generate long bar obs
+  if (use_bar_) {
+    for (int i = 0; i < bar_num_; ++i) {
+      double x, y, z;
+      x = 0.0; // Fixed center
+      y = 0.0; // Fixed center
+      z = 0.0;
+
+      double theta = 1.5707963; // Fixed angle (90 degrees, along Y axis)
+      Eigen::Matrix3d rotate;
+      rotate << cos(theta), -sin(theta), 0.0, sin(theta), cos(theta), 0.0, 0, 0, 1;
+
+      double L_bar = 40.0; // Length
+      double W_bar = 1.0;  // Width
+      double Z_bar = 4.0;  // Height
+
+      for (double lx = -L_bar / 2.0; lx <= L_bar / 2.0; lx += _resolution) {
+        for (double ly = -W_bar / 2.0; ly <= W_bar / 2.0; ly += _resolution) {
+          for (double lz = -1.0; lz <= Z_bar; lz += _resolution) {
+            Eigen::Vector3d pt(lx, ly, lz);
+            pt = rotate * pt + Eigen::Vector3d(x, y, z);
+            pt_random.x = pt(0); pt_random.y = pt(1); pt_random.z = pt(2);
             cloudMap.push_back(pt_random);
           }
         }
@@ -353,8 +378,10 @@ int main(int argc, char** argv) {
   n.param("map/resolution", _resolution, 0.1);
   n.param("map/circle_num", circle_num_, 30);
   n.param("map/use_circle", use_circle_, false);
-  n.param("map/u_num", u_num_, 8);
+  n.param("map/u_num", u_num_, 1);
   n.param("map/use_u_shape", use_u_shape_, true);
+  n.param("map/bar_num", bar_num_, 1);
+  n.param("map/use_bar", use_bar_, true);
 
   n.param("ObstacleShape/lower_rad", _w_l, 0.3);
   n.param("ObstacleShape/upper_rad", _w_h, 0.8);
