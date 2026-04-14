@@ -46,6 +46,8 @@ bool _has_odom = false;
 
 int circle_num_;
 bool use_circle_;
+int u_num_;
+bool use_u_shape_;
 double radius_l_, radius_h_, z_l_, z_h_;
 double theta_;
 uniform_real_distribution<double> rand_radius_;
@@ -159,6 +161,63 @@ void RandomMapGenerate() {
               pt_random.z = cpt_if(2);
               cloudMap.push_back(pt_random);
             }
+      }
+    }
+  }
+
+  // generate U-shape obs
+  if (use_u_shape_) {
+    uniform_real_distribution<double> rand_theta_u(0.0, 6.28);
+
+    for (int i = 0; i < u_num_; ++i) {
+      double x, y, z;
+      x = rand_x(eng);
+      y = rand_y(eng);
+      z = 0.0; // Ground level
+
+      if (sqrt(pow(x - _init_x, 2) + pow(y - _init_y, 2)) < 5.0) {
+        i--;
+        continue;
+      }
+
+      x = floor(x / _resolution) * _resolution + _resolution / 2.0;
+      y = floor(y / _resolution) * _resolution + _resolution / 2.0;
+
+      double theta = rand_theta_u(eng); // Full 2*PI range
+      Eigen::Matrix3d rotate;
+      rotate << cos(theta), -sin(theta), 0.0, sin(theta), cos(theta), 0.0, 0, 0, 1;
+
+      double L = 4.0; // Width of U-shape
+      double H = 4.0; // Length of U-shape arms
+      double Z = 4.0; // Height
+      double thickness = 0.2; // Extra thickness
+
+      for (double lx = -L / 2.0; lx <= L / 2.0; lx += _resolution) {
+        for (double lz = -1.0; lz <= Z; lz += _resolution) { // Start from below ground
+          for (double lt = -thickness; lt <= thickness; lt += _resolution) {
+            Eigen::Vector3d pt(lx, lt, lz);
+            pt = rotate * pt + Eigen::Vector3d(x, y, z);
+            pt_random.x = pt(0); pt_random.y = pt(1); pt_random.z = pt(2);
+            cloudMap.push_back(pt_random);
+          }
+        }
+      }
+      for (double ly = 0.0; ly <= H; ly += _resolution) {
+        for (double lz = -1.0; lz <= Z; lz += _resolution) { // Start from below ground
+          for (double lt = -thickness; lt <= thickness; lt += _resolution) {
+            // Left arm
+            Eigen::Vector3d pt1(-L / 2.0 + lt, ly, lz);
+            pt1 = rotate * pt1 + Eigen::Vector3d(x, y, z);
+            pt_random.x = pt1(0); pt_random.y = pt1(1); pt_random.z = pt1(2);
+            cloudMap.push_back(pt_random);
+
+            // Right arm
+            Eigen::Vector3d pt2(L / 2.0 + lt, ly, lz);
+            pt2 = rotate * pt2 + Eigen::Vector3d(x, y, z);
+            pt_random.x = pt2(0); pt_random.y = pt2(1); pt_random.z = pt2(2);
+            cloudMap.push_back(pt_random);
+          }
+        }
       }
     }
   }
@@ -294,6 +353,8 @@ int main(int argc, char** argv) {
   n.param("map/resolution", _resolution, 0.1);
   n.param("map/circle_num", circle_num_, 30);
   n.param("map/use_circle", use_circle_, false);
+  n.param("map/u_num", u_num_, 8);
+  n.param("map/use_u_shape", use_u_shape_, true);
 
   n.param("ObstacleShape/lower_rad", _w_l, 0.3);
   n.param("ObstacleShape/upper_rad", _w_h, 0.8);
