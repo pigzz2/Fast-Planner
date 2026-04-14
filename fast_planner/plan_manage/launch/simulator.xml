@@ -8,6 +8,7 @@
   <arg name="map_size_z_"/>
   <arg name="c_num"/>
   <arg name="p_num"/>
+  <arg name="use_circle" default="false"/>
   <arg name="odometry_topic"/>
 
   <node pkg ="map_generator" name ="random_forest" type ="random_forest" output = "screen">    
@@ -27,6 +28,7 @@
     <param name="ObstacleShape/upper_hei" value="3.0"/>        
 
     <param name="map/circle_num" value="$(arg c_num)"/>        
+    <param name="map/use_circle" value="$(arg use_circle)"/>        
     <param name="ObstacleShape/radius_l" value="0.7"/>        
     <param name="ObstacleShape/radius_h" value="0.5"/>        
     <param name="ObstacleShape/z_l" value="0.7"/>        

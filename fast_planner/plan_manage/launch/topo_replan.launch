@@ -5,6 +5,7 @@
   <arg name="map_size_z" value=" 5.0"/>
 
   <arg name="odom_topic" value="/state_ukf/odom" />
+  <arg name="use_circle" value="false" />
 
   <!-- main algorithm params -->
   <include file="$(find plan_manage)/launch/topo_algorithm.xml">
@@ -78,6 +79,7 @@
     <arg name="map_size_z_" value="$(arg map_size_z)"/>
     <arg name="c_num" value="100"/>
     <arg name="p_num" value="100"/>
+    <arg name="use_circle" value="$(arg use_circle)"/>
 
     <arg name="odometry_topic" value="$(arg odom_topic)" />
   </include>
